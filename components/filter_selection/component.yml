@@ -1,0 +1,34 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: filter_selection
+display_name: Filter Selection
+version: 1
+type: command
+
+inputs:
+  train_data:
+    type: uri_folder
+  test_data:
+    type: uri_folder
+  mi_percentile:
+    type: integer
+    default: 50
+
+outputs:
+  train_filtered:
+    type: uri_folder
+  test_filtered:
+    type: uri_folder
+
+code: .
+
+command: >-
+  python filter_selection.py
+  --train_data ${{inputs.train_data}}
+  --test_data ${{inputs.test_data}}
+  --mi_percentile ${{inputs.mi_percentile}}
+  --train_filtered ${{outputs.train_filtered}}
+  --test_filtered ${{outputs.test_filtered}}
+
+environment:
+  conda_file: conda.yml
+  image: mcr.microsoft.com/azureml/openmfi4.1.0-ubuntu20.04

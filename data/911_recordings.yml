@@ -1,0 +1,5 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: 911_recordings_gold
+description: Gold layer feature table for 911 emergency call classification
+type: uri_folder
+path: azureml://datastores/adls_911_datastore/paths/911-recordings/features_gold

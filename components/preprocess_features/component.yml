@@ -1,0 +1,35 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: preprocess_features
+display_name: Preprocess Features
+version: 1
+type: command
+
+inputs:
+  data_path:
+    type: uri_folder
+  test_size:
+    type: number
+    default: 0.2
+  random_seed:
+    type: integer
+    default: 42
+
+outputs:
+  train_data:
+    type: uri_folder
+  test_data:
+    type: uri_folder
+
+code: .
+
+command: >-
+  python preprocess_features.py
+  --data_path ${{inputs.data_path}}
+  --test_size ${{inputs.test_size}}
+  --random_seed ${{inputs.random_seed}}
+  --train_data ${{outputs.train_data}}
+  --test_data ${{outputs.test_data}}
+
+environment:
+  conda_file: conda.yml
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04

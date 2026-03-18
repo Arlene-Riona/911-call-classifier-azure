@@ -12,13 +12,13 @@ description: "End-to-end pipeline for probabilistic emergency call audio classif
 experiment_name: "911-call-classifier"
 
 # ── Compute ──────────────────────────────────────────────────
-compute: azureml:cpu-cluster
+compute: azureml:lab4-cluster
 
 # ── Inputs ───────────────────────────────────────────────────
 inputs:
   gold_data:
     type: uri_folder
-    path: "abfss://curated@azuredatalake60306249.dfs.core.windows.net/911-recordings/features_gold/"
+    path: "azureml://datastores/adls_911_datastore/paths/911-recordings/features_gold"
 
 # ── Jobs (Components) ─────────────────────────────────────────
 jobs:

@@ -397,38 +397,38 @@ curated/911-recordings/features_gold
 
 | Check | Result | Status |
 |---|---|---|
-| Missing Values | 0 | ✅ PASS |
-| Feature Normalization | All [0, 1] | ✅ PASS |
-| Outliers (3-sigma) | 0.15% | ✅ PASS |
-| Duplicate Records | 0 | ✅ PASS |
-| Invalid Labels | 0 | ✅ PASS |
+| Missing Values | 0 | PASS |
+| Feature Normalization | All [0, 1] | PASS |
+| Outliers (3-sigma) | 0.15% | PASS |
+| Duplicate Records | 0 | PASS |
+| Invalid Labels | 0 | PASS |
 
 #### Risk Assessment
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Class Imbalance | 🔴 HIGH | SMOTE + class weighting |
-| Fire Class Size (48 samples) | 🔴 HIGH | Class weight=10 for fire class |
-| Feature Redundancy | 🟡 MEDIUM | MI filter removes low-signal correlated features |
-| High Dimensionality (81 features) | 🟡 MEDIUM | Feature selection reduces to ~40 features |
-| Label Noise (keyword-based) | 🟡 MEDIUM | Some misclassification likely from keyword logic |
+| Class Imbalance | HIGH | SMOTE + class weighting |
+| Fire Class Size (48 samples) | HIGH | Class weight=10 for fire class |
+| Feature Redundancy | MEDIUM | MI filter removes low-signal correlated features |
+| High Dimensionality (81 features) | MEDIUM | Feature selection reduces to ~40 features |
+| Label Noise (keyword-based) | MEDIUM | Some misclassification likely from keyword logic |
 
 #### Readiness Score: 8/10
 
 **Strengths:**
-- ✅ No missing/duplicate values
-- ✅ All features properly normalized
-- ✅ 86 diverse acoustic features (MFCCs, spectral, chroma, ZCR, RMS)
-- ✅ Clear class differences (medical vs violence)
-- ✅ 591 total samples sufficient for training
+- No missing/duplicate values
+- All features properly normalized
+- 86 diverse acoustic features (MFCCs, spectral, chroma, ZCR, RMS)
+- Clear class differences (medical vs violence)
+- 591 total samples sufficient for training
 
 **Weaknesses:**
-- ⚠️ Severe class imbalance (8.5x ratio)
-- ⚠️ Fire class severely underrepresented (48 samples)
-- ⚠️ High correlation among MFCC derivatives
-- ⚠️ Fire class overlaps with both medical and violence
+- Severe class imbalance (8.5x ratio)
+- Fire class severely underrepresented (48 samples)
+- High correlation among MFCC derivatives
+- Fire class overlaps with both medical and violence
 
-#### Readiness Recommendation: ✅ GO AHEAD WITH CONDITIONS
+#### Readiness Recommendation: 
 
 1. **Apply SMOTE** to balance training set
 2. **Use class weighting:** fire=10, medical=2, violence=1
@@ -614,13 +614,13 @@ az ml job create --file pipelines/audio_pipeline.yml `
 
 ### Key Insights
 
-✅ **Improvements from Baseline:**
+**Improvements from Baseline:**
 - All three classes now being detected (vs baseline predicting only violence)
 - Balanced approach achieved through SMOTE oversampling
 - Medical class detected with 34.6% precision
 - Fire class now detected (20% recall, previously 0%)
 
-⚠️ **Limitations:**
+**Limitations:**
 - Fire class remains underperforming due to severe sample imbalance (10 samples)
 - Overall accuracy lower than naive baseline but more honest and balanced
 - Medical class precision could be improved with more training data
@@ -658,10 +658,46 @@ The fundamental bottleneck is dataset size and class imbalance. The fire class c
 
 | Component | Duration | Status |
 |---|---|---|
-| preprocess_features | ~2-3 min | ✅ Success |
-| filter_selection | ~2-3 min | ✅ Success |
-| train_evaluate (with SMOTE) | ~2-3 min | ✅ Success |
-| **Total Pipeline** | **~6-10 min** | ✅ Success |
+| preprocess_features | ~2-3 min | Success |
+| filter_selection | ~2-3 min | Success |
+| train_evaluate (with SMOTE) | ~2-3 min | Success |
+| **Total Pipeline** | **~6-10 min** | Success |
+
+## Version Control and Branching Strategy
+
+This project follows a structured Git branching strategy to ensure clean separation of work, reproducibility, and professional version control practices.
+
+### Branch Structure
+```
+main
+└── develop
+    ├── feature/databricks-etl      ← ETL notebooks
+    ├── feature/ml-components       ← Azure ML components
+    ├── feature/model-tuning        ← Model improvement experiments
+    ├── feature/eda                 ← EDA notebook
+    └── feature/readme              ← Documentation
+```
+
+### Branching Rules
+- All new work is done on a dedicated `feature/` branch
+- Feature branches are created from `develop` and merged back into `develop` via Pull Request
+- `main` only receives merges from `develop` when the full pipeline is tested and verified
+- The `.env` file containing Azure credentials is gitignored — only `.env.example` with placeholder values is committed
+
+### Versioning
+- Raw data is versioned under `raw/911-recordings/v1/` — new ingestions create a new version folder without overwriting previous data
+- Azure ML components use `version: auto` so each registration automatically increments the version number
+- All notebooks and pipeline definitions are committed to Git and versioned
+- Every Azure ML pipeline run is automatically tracked with a unique run ID for full reproducibility
+
+### Commit Convention
+
+| Prefix | Purpose |
+|---|---|
+| `feat:` | New feature or notebook |
+| `fix:` | Bug fix |
+| `chore:` | Setup and config changes |
+| `merge:` | Branch merges |
 
 ### Next Steps & Future Work
 

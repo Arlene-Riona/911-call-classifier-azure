@@ -320,7 +320,7 @@ curated/911-recordings/features_gold
 - **Violence calls:** Higher variance, wider distributions → chaotic, panicked speech
 - **Fire calls:** Intermediate distributions → mix of speech and background noise (sirens, crackling)
 - **Finding:** Clear separation between medical (calm) and violence (chaotic) speech patterns
-![alt text](image-6.png)
+![alt text](./images/image-6.png)
 
 #### Spectral Features by Emergency Category
 - **Spectral Centroid (Brightness):**
@@ -333,12 +333,12 @@ curated/911-recordings/features_gold
   - Medical: ~0.35 (consistent, calm)
   - Fire: ~0.42 (variable - sirens vs speech)
   - Violence: ~0.55 (loudest, highest variability - panicked)
-  ![alt text](image-7.png)
+  ![alt text](./images/image-7.png)
   
 - **Spectral Rolloff & Bandwidth:**
   - Medical: Narrow bandwidth (concentrated energy)
   - Fire & Violence: Wide bandwidth (distributed frequency content, chaotic scenes)
-  ![alt text](image-8.png)
+  ![alt text](./images/image-8.png)
   
 - **Finding:** Violence calls are significantly louder; fire calls have noisier, more complex spectral profiles
 
@@ -368,7 +368,7 @@ curated/911-recordings/features_gold
 - **Medical vs Violence:** Clear separation along PC1 (different acoustic characteristics)
 - **Fire vs Medical/Violence:** Significant overlap with both (intermediate characteristics)
 - **Finding:** Fire class is difficult to classify because it overlaps with both medical and violence characteristics; full 81-dimensional feature space necessary for discrimination
-![alt text](image-9.png)
+![alt text](./images/image-9.png)
 
 #### Feature Importance (Mutual Information)
 
@@ -397,38 +397,38 @@ curated/911-recordings/features_gold
 
 | Check | Result | Status |
 |---|---|---|
-| Missing Values | 0 | ✅ PASS |
-| Feature Normalization | All [0, 1] | ✅ PASS |
-| Outliers (3-sigma) | 0.15% | ✅ PASS |
-| Duplicate Records | 0 | ✅ PASS |
-| Invalid Labels | 0 | ✅ PASS |
+| Missing Values | 0 | PASS |
+| Feature Normalization | All [0, 1] | PASS |
+| Outliers (3-sigma) | 0.15% | PASS |
+| Duplicate Records | 0 | PASS |
+| Invalid Labels | 0 | PASS |
 
 #### Risk Assessment
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| Class Imbalance | 🔴 HIGH | SMOTE + class weighting |
-| Fire Class Size (48 samples) | 🔴 HIGH | Class weight=10 for fire class |
-| Feature Redundancy | 🟡 MEDIUM | MI filter removes low-signal correlated features |
-| High Dimensionality (81 features) | 🟡 MEDIUM | Feature selection reduces to ~40 features |
-| Label Noise (keyword-based) | 🟡 MEDIUM | Some misclassification likely from keyword logic |
+| Class Imbalance | HIGH | SMOTE + class weighting |
+| Fire Class Size (48 samples) | HIGH | Class weight=10 for fire class |
+| Feature Redundancy | MEDIUM | MI filter removes low-signal correlated features |
+| High Dimensionality (81 features) | MEDIUM | Feature selection reduces to ~40 features |
+| Label Noise (keyword-based) | MEDIUM | Some misclassification likely from keyword logic |
 
 #### Readiness Score: 8/10
 
 **Strengths:**
-- ✅ No missing/duplicate values
-- ✅ All features properly normalized
-- ✅ 86 diverse acoustic features (MFCCs, spectral, chroma, ZCR, RMS)
-- ✅ Clear class differences (medical vs violence)
-- ✅ 591 total samples sufficient for training
+- No missing/duplicate values
+- All features properly normalized
+- 86 diverse acoustic features (MFCCs, spectral, chroma, ZCR, RMS)
+- Clear class differences (medical vs violence)
+- 591 total samples sufficient for training
 
 **Weaknesses:**
-- ⚠️ Severe class imbalance (8.5x ratio)
-- ⚠️ Fire class severely underrepresented (48 samples)
-- ⚠️ High correlation among MFCC derivatives
-- ⚠️ Fire class overlaps with both medical and violence
+- Severe class imbalance (8.5x ratio)
+- Fire class severely underrepresented (48 samples)
+- High correlation among MFCC derivatives
+- Fire class overlaps with both medical and violence
 
-#### Readiness Recommendation: ✅ GO AHEAD WITH CONDITIONS
+#### Readiness Recommendation: 
 
 1. **Apply SMOTE** to balance training set
 2. **Use class weighting:** fire=10, medical=2, violence=1
@@ -532,7 +532,29 @@ Applies mutual information filter on the training set only to keep the most info
 
 #### train_evaluate
 
-> 🔲 **[ TO BE COMPLETED — train_evaluate component by Fariha Mahaldar ]**
+#### train_evaluate
+
+Trains a Random Forest classifier using SMOTE-balanced data and evaluates on test set. Applies class weighting to penalize misclassification of minority classes.
+
+| Input | Description |
+|---|---|
+| `train_data` | Filtered training set from filter_selection (81 features) |
+| `test_data` | Filtered test set from filter_selection (81 features) |
+| `n_estimators` | Number of trees in Random Forest (default: 200) |
+| `max_depth` | Maximum tree depth (default: 15) |
+| `random_seed` | Reproducibility seed (default: 42) |
+
+| Output | Description |
+|---|---|
+| `model_output` | Trained model pickle file (model.pkl) |
+| `evaluation_metrics` | Classification metrics (evaluation_metrics.json) |
+| `test_predictions` | Test set predictions with probabilities (test_predictions.parquet) |
+
+**Key Techniques:**
+- **SMOTE Oversampling:** Synthetically generates minority class samples to balance training data (328/328/328 samples per class)
+- **Class Weighting:** {medical: 3, fire: 10, violence: 1} to penalize misclassification of rare classes
+- **Stratified Train/Test Split:** Maintains class distribution (80/20 split)
+- **Probabilistic Output:** `predict_proba` returns confidence scores for each class
 
 ### Pipeline Data Flow
 
@@ -565,7 +587,7 @@ az ml job create --file pipelines/audio_pipeline.yml `
 
 ### Pipeline Screenshot
 
-![alt text](image.png)
+![alt text](./images/image.png)
 
 ---
 
@@ -592,13 +614,13 @@ az ml job create --file pipelines/audio_pipeline.yml `
 
 ### Key Insights
 
-✅ **Improvements from Baseline:**
+**Improvements from Baseline:**
 - All three classes now being detected (vs baseline predicting only violence)
 - Balanced approach achieved through SMOTE oversampling
 - Medical class detected with 34.6% precision
 - Fire class now detected (20% recall, previously 0%)
 
-⚠️ **Limitations:**
+**Limitations:**
 - Fire class remains underperforming due to severe sample imbalance (10 samples)
 - Overall accuracy lower than naive baseline but more honest and balanced
 - Medical class precision could be improved with more training data
@@ -609,14 +631,73 @@ az ml job create --file pipelines/audio_pipeline.yml `
 - **After variance filter:** 81 features
 - **After MI filter (top 50%):** ~40 features selected
 
+## Part VII – Results
+
+### Model Selection and Tuning
+
+Several approaches were explored to improve classification performance given the severe class imbalance in the dataset (fire: 8%, medical: 23%, violence: 69%):
+
+| Approach | Accuracy | Medical F1 | Fire F1 | Violence F1 | AUC-ROC |
+|---|---|---|---|---|---|
+| Random Forest (baseline) | 67% | 0.00 | 0.00 | 0.80 | 0.43 |
+| Random Forest + explicit class weights | 50% | 0.34 | 0.13 | 0.64 | 0.52 |
+| Random Forest + SMOTE oversampling | 62% | 0.15 | 0.00 | 0.76 | 0.52 |
+| XGBoost + sample weights | 64% | 0.11 | 0.00 | 0.78 | 0.47 |
+
+### Why Accuracy Remains Limited
+
+The fundamental bottleneck is dataset size and class imbalance. The fire class contains only 48 samples — far below the 200-300 samples per class typically required for reliable acoustic pattern learning. No model or balancing strategy can fully compensate for this lack of training data.
+
+- The **baseline Random Forest** achieved 67% accuracy but only by predicting violence for nearly every call — a degenerate solution that does not generalize
+- **Explicit class weights** forced the model to predict all 3 classes but reduced overall accuracy as the model struggled with insufficient fire and medical samples
+- **SMOTE oversampling** synthetically generated minority class samples which helped medical recall slightly but had no meaningful impact on fire due to the extreme underrepresentation
+- **XGBoost** with sample weights produced similar results to Random Forest, confirming the bottleneck is the data rather than the choice of algorithm
+
+
 ### Pipeline Component Runtimes
 
 | Component | Duration | Status |
 |---|---|---|
-| preprocess_features | ~2-3 min | ✅ Success |
-| filter_selection | ~2-3 min | ✅ Success |
-| train_evaluate (with SMOTE) | ~2-3 min | ✅ Success |
-| **Total Pipeline** | **~6-10 min** | ✅ Success |
+| preprocess_features | ~2-3 min | Success |
+| filter_selection | ~2-3 min | Success |
+| train_evaluate (with SMOTE) | ~2-3 min | Success |
+| **Total Pipeline** | **~6-10 min** | Success |
+
+## Version Control and Branching Strategy
+
+This project follows a structured Git branching strategy to ensure clean separation of work, reproducibility, and professional version control practices.
+
+### Branch Structure
+```
+main
+└── develop
+    ├── feature/databricks-etl      ← ETL notebooks
+    ├── feature/ml-components       ← Azure ML components
+    ├── feature/model-tuning        ← Model improvement experiments
+    ├── feature/eda                 ← EDA notebook
+    └── feature/readme              ← Documentation
+```
+
+### Branching Rules
+- All new work is done on a dedicated `feature/` branch
+- Feature branches are created from `develop` and merged back into `develop` via Pull Request
+- `main` only receives merges from `develop` when the full pipeline is tested and verified
+- The `.env` file containing Azure credentials is gitignored — only `.env.example` with placeholder values is committed
+
+### Versioning
+- Raw data is versioned under `raw/911-recordings/v1/` — new ingestions create a new version folder without overwriting previous data
+- Azure ML components use `version: auto` so each registration automatically increments the version number
+- All notebooks and pipeline definitions are committed to Git and versioned
+- Every Azure ML pipeline run is automatically tracked with a unique run ID for full reproducibility
+
+### Commit Convention
+
+| Prefix | Purpose |
+|---|---|
+| `feat:` | New feature or notebook |
+| `fix:` | Bug fix |
+| `chore:` | Setup and config changes |
+| `merge:` | Branch merges |
 
 ### Next Steps & Future Work
 

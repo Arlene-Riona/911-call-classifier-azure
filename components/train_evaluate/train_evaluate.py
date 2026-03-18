@@ -1,3 +1,4 @@
+from imblearn.over_sampling import SMOTE
 import argparse
 import pandas as pd
 import os
@@ -25,10 +26,10 @@ def main():
 
     # Load train and test
     print(f"Loading train from: {args.train_data}")
-    train_df = pd.read_parquet(os.path.join(args.train_data, "train.parquet"))
+    train_df = pd.read_parquet(os.path.join(args.train_data, "train_filtered.parquet"))
 
     print(f"Loading test from: {args.test_data}")
-    test_df = pd.read_parquet(os.path.join(args.test_data, "test.parquet"))
+    test_df  = pd.read_parquet(os.path.join(args.test_data,  "test_filtered.parquet"))
 
     print(f"Train rows : {len(train_df)}")
     print(f"Test rows  : {len(test_df)}")
@@ -42,13 +43,21 @@ def main():
     print(f"Features : {X_train.shape[1]}")
     print(f"Train label distribution:\n{y_train.value_counts()}")
 
+    # Apply SMOTE to balance classes
+    print("\nApplying SMOTE for class balancing...")
+    smote = SMOTE(random_state=args.random_seed, k_neighbors=3)
+    try:
+        X_train, y_train = smote.fit_resample(X_train, y_train)
+        print(f"After SMOTE:\n{pd.Series(y_train).value_counts()}")
+    except Exception as e:
+        print(f"SMOTE failed: {e}, continuing with original data")
     # Train Random Forest with class weights to handle imbalance
     print("\nTraining Random Forest Classifier...")
     model = RandomForestClassifier(
         n_estimators=args.n_estimators,
         max_depth=args.max_depth,
         random_state=args.random_seed,
-        class_weight="balanced",
+        class_weight=class_weight,
         n_jobs=-1
     )
     model.fit(X_train, y_train)

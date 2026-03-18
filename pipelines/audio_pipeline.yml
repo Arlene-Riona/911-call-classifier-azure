@@ -44,7 +44,7 @@ jobs:
     inputs:
       train_data: ${{parent.jobs.split_dataset.outputs.output_train}}
       test_data: ${{parent.jobs.split_dataset.outputs.output_test}}
-      mi_percentile: 50
+      mi_percentile: 25
     outputs:
       train_filtered:
         type: uri_folder

@@ -1,0 +1,70 @@
+# ============================================================
+# Azure ML Pipeline Definition
+# Cloud-Based Probabilistic Classification of Emergency
+# Call Audio for 911 Call Routing
+# ============================================================
+
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+display_name: "911 Call Classifier Pipeline"
+description: "End-to-end pipeline for probabilistic emergency call audio classification"
+experiment_name: "911-call-classifier"
+
+# ── Compute ──────────────────────────────────────────────────
+compute: azureml:lab4-cluster
+
+# ── Inputs ───────────────────────────────────────────────────
+inputs:
+  gold_data:
+    type: uri_folder
+    path: "azureml://datastores/adls_911_datastore/paths/911-recordings/features_gold"
+
+# ── Jobs (Components) ─────────────────────────────────────────
+jobs:
+
+  # ── Step 1: Split Dataset ────────────────────────────────────
+  split_dataset:
+    type: command
+    component: file:../components/split_dataset/component.yml
+    inputs:
+      input_data: ${{parent.inputs.gold_data}}
+      test_size: 0.2
+      random_seed: 42
+    outputs:
+      output_train:
+        type: uri_folder
+      output_test:
+        type: uri_folder
+
+  # ── Step 2: Filter Selection ─────────────────────────────────
+  filter_selection:
+    type: command
+    component: file:../components/filter_selection/component.yml
+    inputs:
+      train_data: ${{parent.jobs.split_dataset.outputs.output_train}}
+      test_data: ${{parent.jobs.split_dataset.outputs.output_test}}
+      mi_percentile: 25
+    outputs:
+      train_filtered:
+        type: uri_folder
+      test_filtered:
+        type: uri_folder
+
+  # ── Step 3: Train and Evaluate ────────────────────────────────
+  train_evaluate:
+    type: command
+    component: file:../components/train_evaluate/component.yml
+    inputs:
+      train_data: ${{parent.jobs.filter_selection.outputs.train_filtered}}
+      test_data: ${{parent.jobs.filter_selection.outputs.test_filtered}}
+      n_estimators: 100
+      max_depth: 10
+      random_seed: 42
+    outputs:
+      model_output:
+        type: uri_folder
+      evaluation_metrics:
+        type: uri_folder
+      test_predictions:
+        type: uri_folder

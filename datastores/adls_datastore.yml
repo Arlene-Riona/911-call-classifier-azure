@@ -1,0 +1,8 @@
+$schema: https://azuremlschemas.azureedge.net/latest/azureBlob.schema.json
+name: adls_911_datastore
+type: azure_blob
+description: Azure Data Lake Gen2 datastore for 911 recordings project
+account_name: datalake60306249
+container_name: curated
+credentials:
+  account_key: ${AZURE_STORAGE_KEY}

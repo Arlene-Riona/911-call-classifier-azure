@@ -1,7 +1,7 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: split_dataset
 display_name: Split Dataset
-version: 1
+version: 3
 type: command
 
 inputs:

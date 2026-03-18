@@ -110,5 +110,5 @@ def main():
     print(f"Predictions saved ✅")
     print("\nPipeline complete ✅")
 
-if _name_ == "_main_":
+if __name__ == "__main__":
     main()

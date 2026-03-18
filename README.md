@@ -532,7 +532,29 @@ Applies mutual information filter on the training set only to keep the most info
 
 #### train_evaluate
 
-> 🔲 **[ TO BE COMPLETED — train_evaluate component by Fariha Mahaldar ]**
+#### train_evaluate
+
+Trains a Random Forest classifier using SMOTE-balanced data and evaluates on test set. Applies class weighting to penalize misclassification of minority classes.
+
+| Input | Description |
+|---|---|
+| `train_data` | Filtered training set from filter_selection (81 features) |
+| `test_data` | Filtered test set from filter_selection (81 features) |
+| `n_estimators` | Number of trees in Random Forest (default: 200) |
+| `max_depth` | Maximum tree depth (default: 15) |
+| `random_seed` | Reproducibility seed (default: 42) |
+
+| Output | Description |
+|---|---|
+| `model_output` | Trained model pickle file (model.pkl) |
+| `evaluation_metrics` | Classification metrics (evaluation_metrics.json) |
+| `test_predictions` | Test set predictions with probabilities (test_predictions.parquet) |
+
+**Key Techniques:**
+- **SMOTE Oversampling:** Synthetically generates minority class samples to balance training data (328/328/328 samples per class)
+- **Class Weighting:** {medical: 3, fire: 10, violence: 1} to penalize misclassification of rare classes
+- **Stratified Train/Test Split:** Maintains class distribution (80/20 split)
+- **Probabilistic Output:** `predict_proba` returns confidence scores for each class
 
 ### Pipeline Data Flow
 

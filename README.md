@@ -609,6 +609,29 @@ az ml job create --file pipelines/audio_pipeline.yml `
 - **After variance filter:** 81 features
 - **After MI filter (top 50%):** ~40 features selected
 
+## Part VII – Results
+
+### Model Selection and Tuning
+
+Several approaches were explored to improve classification performance given the severe class imbalance in the dataset (fire: 8%, medical: 23%, violence: 69%):
+
+| Approach | Accuracy | Medical F1 | Fire F1 | Violence F1 | AUC-ROC |
+|---|---|---|---|---|---|
+| Random Forest (baseline) | 67% | 0.00 | 0.00 | 0.80 | 0.43 |
+| Random Forest + explicit class weights | 50% | 0.34 | 0.13 | 0.64 | 0.52 |
+| Random Forest + SMOTE oversampling | 62% | 0.15 | 0.00 | 0.76 | 0.52 |
+| XGBoost + sample weights | 64% | 0.11 | 0.00 | 0.78 | 0.47 |
+
+### Why Accuracy Remains Limited
+
+The fundamental bottleneck is dataset size and class imbalance. The fire class contains only 48 samples — far below the 200-300 samples per class typically required for reliable acoustic pattern learning. No model or balancing strategy can fully compensate for this lack of training data.
+
+- The **baseline Random Forest** achieved 67% accuracy but only by predicting violence for nearly every call — a degenerate solution that does not generalize
+- **Explicit class weights** forced the model to predict all 3 classes but reduced overall accuracy as the model struggled with insufficient fire and medical samples
+- **SMOTE oversampling** synthetically generated minority class samples which helped medical recall slightly but had no meaningful impact on fire due to the extreme underrepresentation
+- **XGBoost** with sample weights produced similar results to Random Forest, confirming the bottleneck is the data rather than the choice of algorithm
+
+
 ### Pipeline Component Runtimes
 
 | Component | Duration | Status |

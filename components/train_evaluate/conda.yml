@@ -1,0 +1,11 @@
+name: train_evaluate
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pip:
+    - azureml-mlflow
+    - pandas
+    - scikit-learn
+    - joblib
+    - pyarrow

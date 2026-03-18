@@ -53,6 +53,11 @@ def main():
         print(f"SMOTE failed: {e}, continuing with original data")
     # Train Random Forest with class weights to handle imbalance
     print("\nTraining Random Forest Classifier...")
+
+    # Explicit class weights inversely proportional to class frequency
+    # medical=133(23%), fire=48(8%), violence=410(69%)
+    class_weight = {0: 3, 1: 10, 2: 1}
+
     model = RandomForestClassifier(
         n_estimators=args.n_estimators,
         max_depth=args.max_depth,

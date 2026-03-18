@@ -320,7 +320,7 @@ curated/911-recordings/features_gold
 - **Violence calls:** Higher variance, wider distributions → chaotic, panicked speech
 - **Fire calls:** Intermediate distributions → mix of speech and background noise (sirens, crackling)
 - **Finding:** Clear separation between medical (calm) and violence (chaotic) speech patterns
-![alt text](image-6.png)
+![alt text](./images/image-6.png)
 
 #### Spectral Features by Emergency Category
 - **Spectral Centroid (Brightness):**
@@ -333,12 +333,12 @@ curated/911-recordings/features_gold
   - Medical: ~0.35 (consistent, calm)
   - Fire: ~0.42 (variable - sirens vs speech)
   - Violence: ~0.55 (loudest, highest variability - panicked)
-  ![alt text](image-7.png)
+  ![alt text](./images/image-7.png)
   
 - **Spectral Rolloff & Bandwidth:**
   - Medical: Narrow bandwidth (concentrated energy)
   - Fire & Violence: Wide bandwidth (distributed frequency content, chaotic scenes)
-  ![alt text](image-8.png)
+  ![alt text](./images/image-8.png)
   
 - **Finding:** Violence calls are significantly louder; fire calls have noisier, more complex spectral profiles
 
@@ -368,7 +368,7 @@ curated/911-recordings/features_gold
 - **Medical vs Violence:** Clear separation along PC1 (different acoustic characteristics)
 - **Fire vs Medical/Violence:** Significant overlap with both (intermediate characteristics)
 - **Finding:** Fire class is difficult to classify because it overlaps with both medical and violence characteristics; full 81-dimensional feature space necessary for discrimination
-![alt text](image-9.png)
+![alt text](./images/image-9.png)
 
 #### Feature Importance (Mutual Information)
 
@@ -565,7 +565,7 @@ az ml job create --file pipelines/audio_pipeline.yml `
 
 ### Pipeline Screenshot
 
-![alt text](image.png)
+![alt text](./images/image.png)
 
 ---
 

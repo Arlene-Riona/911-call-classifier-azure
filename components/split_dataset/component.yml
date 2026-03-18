@@ -1,0 +1,35 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+name: split_dataset
+display_name: Split Dataset
+version: 1
+type: command
+
+inputs:
+  input_data:
+    type: uri_folder
+  test_size:
+    type: number
+    default: 0.2
+  random_seed:
+    type: integer
+    default: 42
+
+outputs:
+  output_train:
+    type: uri_folder
+  output_test:
+    type: uri_folder
+
+code: .
+
+command: >-
+  python split_dataset.py
+  --input_data ${{inputs.input_data}}
+  --test_size ${{inputs.test_size}}
+  --random_seed ${{inputs.random_seed}}
+  --output_train ${{outputs.output_train}}
+  --output_test ${{outputs.output_test}}
+
+environment:
+  conda_file: conda.yml
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04

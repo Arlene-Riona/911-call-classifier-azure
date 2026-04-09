@@ -1,0 +1,6 @@
+$schema: https://azuremlschemas.azureedge.net/latest/data.schema.json
+name: 911_test_filtered
+version: 1
+type: uri_folder
+path: azureml://datastores/workspaceblobstore/paths/azureml/199cba2a-91b1-4541-9943-29a3bf5ea65d/test_filtered/
+description: Filtered test features for 911 call sweep job

@@ -62,11 +62,10 @@ def main():
             print(f"SMOTE failed: {e}, continuing without SMOTE")
     else:
         print("\nSkipping SMOTE...")
+
     # Train Random Forest with class weights to handle imbalance
     print("\nTraining Random Forest Classifier...")
 
-    # Explicit class weights inversely proportional to class frequency
-    # medical=133(23%), fire=48(8%), violence=410(69%)
     if args.use_class_weight == 1:
         class_weight = "balanced"
     else:
@@ -105,10 +104,11 @@ def main():
         target_names=["medical", "fire", "violence"]
     ))
 
-    # After computing metrics:
+    # Log f1_macro for sweep objective
     f1_macro = f1_score(y_test, y_pred, average="macro")
+    mlflow.start_run()
     mlflow.log_metric("f1_macro", f1_macro)
-
+    mlflow.end_run()
 
     # Save model
     os.makedirs(args.model_output, exist_ok=True)

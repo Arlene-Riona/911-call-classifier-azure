@@ -22,6 +22,9 @@ def main():
     parser.add_argument("--model_output",       type=str)
     parser.add_argument("--evaluation_metrics", type=str)
     parser.add_argument("--test_predictions",   type=str)
+    parser.add_argument("--use_smote", type=int, default=1)
+    parser.add_argument("--smote_k", type=int, default=3)
+    parser.add_argument("--use_class_weight", type=int, default=1)
     args = parser.parse_args()
 
     # Load train and test
@@ -45,18 +48,28 @@ def main():
 
     # Apply SMOTE to balance classes
     print("\nApplying SMOTE for class balancing...")
-    smote = SMOTE(random_state=args.random_seed, k_neighbors=3)
-    try:
-        X_train, y_train = smote.fit_resample(X_train, y_train)
-        print(f"After SMOTE:\n{pd.Series(y_train).value_counts()}")
-    except Exception as e:
-        print(f"SMOTE failed: {e}, continuing with original data")
+    if args.use_smote == 1:
+        print("\nApplying SMOTE for class balancing...")
+        try:
+            smote = SMOTE(
+                random_state=args.random_seed,
+                k_neighbors=args.smote_k
+            )
+            X_train, y_train = smote.fit_resample(X_train, y_train)
+            print(f"After SMOTE:\n{pd.Series(y_train).value_counts()}")
+        except Exception as e:
+            print(f"SMOTE failed: {e}, continuing without SMOTE")
+    else:
+        print("\nSkipping SMOTE...")
     # Train Random Forest with class weights to handle imbalance
     print("\nTraining Random Forest Classifier...")
 
     # Explicit class weights inversely proportional to class frequency
     # medical=133(23%), fire=48(8%), violence=410(69%)
-    class_weight = {0: 3, 1: 10, 2: 1}
+    if args.use_class_weight == 1:
+        class_weight = "balanced"
+    else:
+        class_weight = None
 
     model = RandomForestClassifier(
         n_estimators=args.n_estimators,
@@ -66,7 +79,7 @@ def main():
         n_jobs=-1
     )
     model.fit(X_train, y_train)
-    print("Training complete ✅")
+    print("Training complete")
 
     # Predict
     y_pred       = model.predict(X_test)
@@ -94,7 +107,7 @@ def main():
     # Save model
     os.makedirs(args.model_output, exist_ok=True)
     joblib.dump(model, os.path.join(args.model_output, "model.pkl"))
-    print(f"Model saved ✅")
+    print(f"Model saved")
 
     # Save metrics
     os.makedirs(args.evaluation_metrics, exist_ok=True)
@@ -106,7 +119,7 @@ def main():
     }
     with open(os.path.join(args.evaluation_metrics, "evaluation_metrics.json"), "w") as f:
         json.dump(metrics, f, indent=2)
-    print(f"Metrics saved ✅")
+    print(f"Metrics saved")
 
     # Save predictions with probabilities
     os.makedirs(args.test_predictions, exist_ok=True)
@@ -121,8 +134,8 @@ def main():
         os.path.join(args.test_predictions, "test_predictions.parquet"),
         index=False
     )
-    print(f"Predictions saved ✅")
-    print("\nPipeline complete ✅")
+    print(f"Predictions saved")
+    print("\nPipeline complete")
 
 if __name__ == "__main__":
     main()

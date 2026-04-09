@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import json
 import joblib
+import mlflow
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import (
     classification_report,
@@ -103,6 +104,11 @@ def main():
         y_test, y_pred,
         target_names=["medical", "fire", "violence"]
     ))
+
+    # After computing metrics:
+    f1_macro = f1_score(y_test, y_pred, average="macro")
+    mlflow.log_metric("f1_macro", f1_macro)
+
 
     # Save model
     os.makedirs(args.model_output, exist_ok=True)

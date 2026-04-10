@@ -1,9 +1,8 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 name: train_evaluate
 display_name: Train and Evaluate
-version: 3
+version: 4
 type: command
-
 inputs:
   train_data:
     type: uri_folder
@@ -11,14 +10,19 @@ inputs:
     type: uri_folder
   n_estimators:
     type: integer
-    default: 200
+    default: 100
   max_depth:
     type: integer
-    default: 15
+    default: 10
   random_seed:
     type: integer
     default: 42
-
+  smote_k:
+    type: integer
+    default: 3
+  use_smote:
+    type: integer
+    default: 1
 outputs:
   model_output:
     type: uri_folder
@@ -26,9 +30,7 @@ outputs:
     type: uri_folder
   test_predictions:
     type: uri_folder
-
 code: .
-
 command: >-
   python train_evaluate.py
   --train_data ${{inputs.train_data}}
@@ -36,10 +38,11 @@ command: >-
   --n_estimators ${{inputs.n_estimators}}
   --max_depth ${{inputs.max_depth}}
   --random_seed ${{inputs.random_seed}}
+  --smote_k ${{inputs.smote_k}}
+  --use_smote ${{inputs.use_smote}}
   --model_output ${{outputs.model_output}}
   --evaluation_metrics ${{outputs.evaluation_metrics}}
   --test_predictions ${{outputs.test_predictions}}
-
 environment:
   conda_file: conda.yml
   image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04

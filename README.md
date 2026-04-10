@@ -609,7 +609,7 @@ az ml job create --file pipelines/audio_pipeline.yml `
 
 ### Pipeline Screenshot
 
-![alt text](./images/image.png)
+<img width="607" height="652" alt="image" src="https://github.com/user-attachments/assets/774d4eec-7dee-4d4d-968f-1ad931811f0a" />
 
 ---
 
@@ -684,6 +684,9 @@ Registering the model ensures Azure ML tracks:
 - **Experiment lineage** — the model is linked to the exact training run that produced it
 - **Training metadata** — hyperparameters, metrics, and outputs are all traceable
 
+<img width="838" height="697" alt="image" src="https://github.com/user-attachments/assets/97be4327-5001-45da-a4b3-061bef378e7c" />
+
+
 ## Part IX – CI/CD Pipeline
 
 ### Overview
@@ -709,6 +712,9 @@ On every push to `main`, the pipeline:
 | **Resource Group** | `rg-60306249` |
 | **Workspace** | `Amazon-lab2-60306249` |
 | **Pipeline File** | `azure-pipelines.yml` (root of repo) |
+
+<img width="1902" height="501" alt="image" src="https://github.com/user-attachments/assets/e43bd448-d808-4a86-9ba0-0536c6ef3c2a" />
+
 
 ## Part X – Deployment
 

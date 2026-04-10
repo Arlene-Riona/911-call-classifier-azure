@@ -1,0 +1,12 @@
+name: 911-call-inference-env
+channels:
+  - defaults
+dependencies:
+  - python=3.9
+  - pip:
+    - pandas
+    - numpy
+    - scikit-learn
+    - joblib
+    - pyarrow
+    - azureml-defaults

@@ -23,9 +23,10 @@ Help emergency dispatchers prioritize routing decisions during the early stage o
 ```
 911-call-classifier-azure/
 ├── databricks/
-│   ├── 01_bronze_ingestion.ipynb
-│   ├── 02_silver_to_gold.ipynb
-│   └── 03_gold_to_ml_ready.ipynb
+│   ├── 1_bronze_ingestion.ipynb
+│   ├── 2_silver_to_gold.ipynb
+│   ├── 3_gold_to_ml_ready.ipynb
+│   └── 4_visualizations.ipynb
 ├── components/
 │   ├── preprocess_features/
 │   │   ├── preprocess_features.py
@@ -35,6 +36,10 @@ Help emergency dispatchers prioritize routing decisions during the early stage o
 │   │   ├── filter_selection.py
 │   │   ├── component.yml
 │   │   └── conda.yml
+│   ├── split_dataset/
+│   │   ├── split_dataset.py
+│   │   ├── component.yml
+│   │   └── conda.yml
 │   └── train_evaluate/
 │       ├── train_evaluate.py
 │       ├── component.yml
@@ -42,12 +47,27 @@ Help emergency dispatchers prioritize routing decisions during the early stage o
 ├── datastores/
 │   └── adls_datastore.yml
 ├── data/
+│   ├── register_911_test_filtered.yml
+│   ├── register_911_train_filtered.yml
 │   └── 911_recordings.yml
+├── images/
+│   ├── image-1.png
+│   ├── image-2.png
+│   ├── image-3.png
+│   ├── image-4.png
+│   ├── image-5.png
+│   ├── image-6.png
+│   ├── image-7.png
+│   ├── image-8.png
+│   ├── image-9.png
+│   └── image.png
 ├── pipelines/
 │   └── audio_pipeline.yml
 ├── config/
-│   └── config.yaml
+│   └── sweep_job.yaml
 ├── .env.example
+├── .gitignore
+├── azure-pipelines.yml
 └── README.md
 ```
 
@@ -538,11 +558,13 @@ Trains a Random Forest classifier using SMOTE-balanced data and evaluates on tes
 
 | Input | Description |
 |---|---|
-| `train_data` | Filtered training set from filter_selection (81 features) |
-| `test_data` | Filtered test set from filter_selection (81 features) |
-| `n_estimators` | Number of trees in Random Forest (default: 200) |
-| `max_depth` | Maximum tree depth (default: 15) |
+| `train_data` | Filtered training set from filter_selection |
+| `test_data` | Filtered test set from filter_selection |
+| `n_estimators` | Number of trees in Random Forest (default: 100) |
+| `max_depth` | Maximum tree depth (default: 10) |
 | `random_seed` | Reproducibility seed (default: 42) |
+| `smote_k` | Number of nearest neighbours for SMOTE (default: 3) |
+| `use_smote` | Whether to apply SMOTE oversampling (default: 1) |
 
 | Output | Description |
 |---|---|
@@ -591,47 +613,122 @@ az ml job create --file pipelines/audio_pipeline.yml `
 
 ---
 
-## Part VII – Results
+## Part VII – Hyperparameter Sweep
 
-### Final Model Performance
+### Sweep Configuration
 
-**Model:** Random Forest (200 trees, max_depth=15)
-**Approach:** SMOTE oversampling + class weighting
+A hyperparameter sweep was conducted using Azure ML's sweep job to find the optimal configuration for the Random Forest classifier. The sweep used **random sampling** across the following search space:
 
-#### Overall Metrics
-- **Accuracy:** 50.4%
-- **F1-Score (weighted):** 0.529
-- **AUC-ROC:** 0.517
+| Hyperparameter | Values Searched |
+|---|---|
+| `n_estimators` | 50, 100, 200 |
+| `max_depth` | 5, 10, 20 |
+| `smote_k` | 3, 5 |
+| `use_smote` | 0, 1 |
 
-#### Per-Class Performance
+- **Objective:** Maximize `f1_macro`
+- **Total Trials:** 8
+- **Max Concurrent Trials:** 2
+- **Sampling Algorithm:** Random
 
-| Class | Precision | Recall | F1-Score | Support |
-|---|---|---|---|---|
-| Medical | 34.6% | 33.3% | 0.340 | 27 |
-| Fire | 9.1% | 20.0% | 0.125 | 10 |
-| Violence | 69.0% | 59.8% | 0.640 | 82 |
-| **Weighted Avg** | **56.2%** | **50.4%** | **0.529** | 119 |
+### Best Parameters
 
-### Key Insights
+The sweep identified the following optimal configuration:
 
-**Improvements from Baseline:**
-- All three classes now being detected (vs baseline predicting only violence)
-- Balanced approach achieved through SMOTE oversampling
-- Medical class detected with 34.6% precision
-- Fire class now detected (20% recall, previously 0%)
+| Parameter | Best Value |
+|---|---|
+| `n_estimators` | 100 |
+| `max_depth` | 10 |
+| `smote_k` | 3 |
+| `use_smote` | 1 (enabled) |
 
-**Limitations:**
-- Fire class remains underperforming due to severe sample imbalance (10 samples)
-- Overall accuracy lower than naive baseline but more honest and balanced
-- Medical class precision could be improved with more training data
+These parameters are now set as defaults in both `train_evaluate.py` and `component.yml`, ensuring the standard training pipeline always uses the best discovered configuration.
 
-### Feature Selection Results
 
-- **Features extracted:** 86 acoustic features (MFCC, spectral, ZCR, chroma, RMS, etc.)
-- **After variance filter:** 81 features
-- **After MI filter (top 50%):** ~40 features selected
+### Submitting the Sweep Job
+```bash
+az ml job create --file config/sweep_job.yml \
+  --workspace-name <your-workspace> \
+  --resource-group <your-rg>
+```
 
-## Part VII – Results
+---
+
+## Part VIII – Model Registration
+
+After the pipeline completed with the best hyperparameters, the trained model was registered in Azure ML for versioning, traceability, and deployment.
+
+### Registered Model Details
+
+| Field | Value |
+|---|---|
+| **Model Name** | `911-call-classifier` |
+| **Version** | 1 |
+| **Type** | `custom_model` |
+| **Artifact** | `model.pkl` |
+| **Source Job** | Best child run from sweep job |
+
+### Registration Command
+```bash
+az ml model create \
+  --name 911-call-classifier \
+  --version 1 \
+  --path azureml://jobs/<best-child-job-id>/outputs/model_output \
+  --type custom_model \
+  --workspace-name <your-workspace> \
+  --resource-group <your-rg>
+```
+
+Registering the model ensures Azure ML tracks:
+- **Model versions** — every registered model gets a version number for rollback if needed
+- **Experiment lineage** — the model is linked to the exact training run that produced it
+- **Training metadata** — hyperparameters, metrics, and outputs are all traceable
+
+## Part IX – CI/CD Pipeline
+
+### Overview
+
+A CI/CD pipeline is configured using **Azure DevOps** to automate model training on every push to the `main` branch. This ensures the model is always retrained with the latest code and data changes without manual intervention.
+
+### Pipeline Behavior
+
+On every push to `main`, the pipeline:
+1. Checks out the repository
+2. Installs the Azure ML CLI extension
+3. Authenticates to the Azure workspace
+4. Submits the sweep job defined in `config/sweep_job.yml`
+5. Streams training logs to the DevOps console
+
+### Configuration
+
+| Setting | Value |
+|---|---|
+| **Trigger Branch** | `main` |
+| **Agent Pool** | `ubuntu-latest` |
+| **Azure Subscription** | `SC-UDST-CCIT-DSAI3202-1` |
+| **Resource Group** | `rg-60306249` |
+| **Workspace** | `Amazon-lab2-60306249` |
+| **Pipeline File** | `azure-pipelines.yml` (root of repo) |
+
+## Part X – Deployment
+
+### Deployment Mode
+Real-time endpoint deployed on Azure ML.
+
+### Endpoint Details
+
+| Field | Value |
+|---|---|
+| **Endpoint Name** | TBD |
+| **Model** | `911-call-classifier` version 1 |
+| **Input** | Acoustic features (parquet) |
+| **Output** | Predicted class + probabilities |
+
+### Deployment Validation
+[INSERT SCREENSHOT OF DEPLOYED ENDPOINT]
+
+
+## Part XI – Results
 
 ### Model Selection and Tuning
 
@@ -643,15 +740,43 @@ Several approaches were explored to improve classification performance given the
 | Random Forest + explicit class weights | 50% | 0.34 | 0.13 | 0.64 | 0.52 |
 | Random Forest + SMOTE oversampling | 62% | 0.15 | 0.00 | 0.76 | 0.52 |
 | XGBoost + sample weights | 64% | 0.11 | 0.00 | 0.78 | 0.47 |
+| **Random Forest + SMOTE + class weights (best params)** | **66%** | **0.34** | **0.00** | **0.77** | **0.56** |
 
-### Why Accuracy Remains Limited
+### Final Model Performance
 
-The fundamental bottleneck is dataset size and class imbalance. The fire class contains only 48 samples — far below the 200-300 samples per class typically required for reliable acoustic pattern learning. No model or balancing strategy can fully compensate for this lack of training data.
+**Model:** Random Forest (`n_estimators=100`, `max_depth=10`, `smote_k=3`, `use_smote=1`)  
+**Approach:** SMOTE oversampling + balanced class weighting  
+**Selected via:** Azure ML hyperparameter sweep (8 trials, maximising `f1_macro`)
 
-- The **baseline Random Forest** achieved 67% accuracy but only by predicting violence for nearly every call — a degenerate solution that does not generalize
-- **Explicit class weights** forced the model to predict all 3 classes but reduced overall accuracy as the model struggled with insufficient fire and medical samples
-- **SMOTE oversampling** synthetically generated minority class samples which helped medical recall slightly but had no meaningful impact on fire due to the extreme underrepresentation
-- **XGBoost** with sample weights produced similar results to Random Forest, confirming the bottleneck is the data rather than the choice of algorithm
+#### Overall Metrics
+
+| Metric | Value |
+|---|---|
+| Accuracy | 65.5% |
+| F1-Score (weighted) | 0.610 |
+| AUC-ROC | 0.565 |
+
+#### Per-Class Performance
+
+| Class | Precision | Recall | F1-Score | Support |
+|---|---|---|---|---|
+| Medical | 40% | 30% | 0.34 | 27 |
+| Fire | 0% | 0% | 0.00 | 10 |
+| Violence | 71% | 85% | 0.77 | 82 |
+| **Weighted Avg** | **58%** | **66%** | **0.61** | **119** |
+
+### Key Insights
+
+**Improvements from Baseline:**
+- Medical class now detected with 34% F1 (vs 0.00 in baseline)
+- Violence F1 maintained at 0.77
+- AUC-ROC improved from 0.43 to 0.56
+- SMOTE successfully balanced training set to 328 samples per class
+
+**Limitations:**
+- Fire class remains at 0.00 F1 — only 10 test samples, model cannot learn reliable patterns
+- Overall accuracy slightly lower than naive baseline but far more balanced and honest
+- Fundamental bottleneck is data quantity — no algorithm can compensate for 10 fire test samples
 
 
 ### Pipeline Component Runtimes
@@ -676,6 +801,8 @@ main
     ├── feature/model-tuning        ← Model improvement experiments
     ├── feature/eda                 ← EDA notebook
     └── feature/readme              ← Documentation
+└── develop_phase2
+    └── feature/azureml-hyperparameter-sweep  ← sweep + CI/CD
 ```
 
 ### Branching Rules
@@ -701,16 +828,14 @@ main
 
 ### Next Steps & Future Work
 
-**Short-term (Phase 2):**
+**Short-term:**
 - Collect more fire emergency samples to improve minority class performance
-- Try gradient boosting models (XGBoost, LightGBM)
-- Perform hyperparameter grid search
-- Implement cross-validation for robust evaluation
+- Implement cross-validation for more robust evaluation
+- Add confidence calibration for probabilistic outputs
 
 **Long-term:**
 - Explore deep learning approaches (CNN/RNN for audio)
 - Implement real-time inference pipeline for dispatcher integration
-- Add confidence calibration for probabilistic outputs
 - Deploy model as REST API for operational use
 ---
 
@@ -768,6 +893,36 @@ az ml component create --file components/train_evaluate/component.yml --workspac
 ```powershell
 az ml job create --file pipelines/audio_pipeline.yml --workspace-name $env:AZURE_WORKSPACE_NAME --resource-group $env:AZURE_RESOURCE_GROUP --stream
 ```
+
+**8. Run Hyperparameter Sweep**
+```powershell
+# Register filtered data assets first
+az ml data create --file data/register_911_train_filtered.yml --workspace-name $env:AZURE_WORKSPACE_NAME --resource-group $env:AZURE_RESOURCE_GROUP
+az ml data create --file data/register_911_test_filtered.yml --workspace-name $env:AZURE_WORKSPACE_NAME --resource-group $env:AZURE_RESOURCE_GROUP
+
+# Submit sweep job
+az ml job create --file config/sweep_job.yml --workspace-name $env:AZURE_WORKSPACE_NAME --resource-group $env:AZURE_RESOURCE_GROUP --stream
+```
+
+Once complete, go to **Azure ML Studio → Jobs → rf-sweep-job → Child jobs** and identify the best run (highest `f1_macro`, marked with a green BEST badge).
+
+**9. Register the Best Model**
+```powershell
+az ml model create `
+  --name 911-call-classifier `
+  --version 1 `
+  --path azureml://jobs/<best-child-job-id>/outputs/model_output `
+  --type custom_model `
+  --workspace-name $env:AZURE_WORKSPACE_NAME `
+  --resource-group $env:AZURE_RESOURCE_GROUP
+```
+
+Replace `<best-child-job-id>` with the name of the best child job from the sweep (e.g. `magenta_pizza_x33kcm4fj8_1`).
+```
+
+And the commit heading for the final README update:
+```
+docs: finalize README with sweep, model registration, deployment placeholder and updated branching strategy
 
 ---
 

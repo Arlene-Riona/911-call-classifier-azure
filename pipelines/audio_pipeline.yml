@@ -61,6 +61,8 @@ jobs:
       n_estimators: 100
       max_depth: 10
       random_seed: 42
+      smote_k: 3        
+      use_smote: 1
     outputs:
       model_output:
         type: uri_folder

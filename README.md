@@ -65,6 +65,13 @@ Help emergency dispatchers prioritize routing decisions during the early stage o
 │   └── audio_pipeline.yml
 ├── config/
 │   └── sweep_job.yaml
+├── src/
+│   ├── score.py
+│   └── invoke_endpoint.py
+├── jobs/
+│   └── deployment.yml
+├── env/
+│   └── inference_conda.yml
 ├── .env.example
 ├── .gitignore
 ├── azure-pipelines.yml
@@ -728,10 +735,20 @@ Real-time endpoint deployed on Azure ML.
 
 | Field | Value |
 |---|---|
-| **Endpoint Name** | TBD |
-| **Model** | `911-call-classifier` version 1 |
+| **Endpoint Name** | call911-endpoint |
+| **Model** | `911-call-classifier` version 2 |
 | **Input** | Acoustic features (parquet) |
 | **Output** | Predicted class + probabilities |
+
+### Deployment Results
+
+| Metric | Value |
+|---|---|
+| **Accuracy** | 65.5% |
+| **F1** | 0.61 |
+| **Violence F1** | 0.77 |
+| **Medical F1** | 0.34 |
+| **Fire F1** | 0.00 |
 
 ### Deployment Validation
 [INSERT SCREENSHOT OF DEPLOYED ENDPOINT]

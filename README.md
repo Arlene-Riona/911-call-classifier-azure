@@ -751,7 +751,10 @@ Real-time endpoint deployed on Azure ML.
 | **Fire F1** | 0.00 |
 
 ### Deployment Validation
-[INSERT SCREENSHOT OF DEPLOYED ENDPOINT]
+
+![WhatsApp Image 2026-04-11 at 12 44 43 AM](https://github.com/user-attachments/assets/bb03ff5f-0cae-477d-a9da-47e44342f6f7)
+
+![WhatsApp Image 2026-04-11 at 12 44 55 AM](https://github.com/user-attachments/assets/0a4b453f-eaac-424b-a997-22cacd9c837f)
 
 
 ## Part XI – Results

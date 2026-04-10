@@ -652,6 +652,9 @@ az ml job create --file config/sweep_job.yml \
   --resource-group <your-rg>
 ```
 
+<img width="1561" height="472" alt="image" src="https://github.com/user-attachments/assets/7c76ef97-50eb-4da1-b9fb-17a7ecce8305" />
+
+
 ---
 
 ## Part VIII – Model Registration

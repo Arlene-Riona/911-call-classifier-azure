@@ -1,0 +1,17 @@
+$schema: https://azuremlschemas.azureedge.net/latest/managedOnlineDeployment.schema.json
+
+name: call-911-deployment
+endpoint_name: 911-call-endpoint
+
+model: azureml:911-call-classifier:2
+
+code_configuration:
+  code: ../src
+  scoring_script: score.py
+
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+  conda_file: ../env/inference_conda.yml
+
+instance_type: Standard_F2s_v2
+instance_count: 1

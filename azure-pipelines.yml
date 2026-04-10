@@ -1,0 +1,55 @@
+trigger:
+  branches:
+    include:
+      - main
+pool:
+  vmImage: ubuntu-latest
+variables:
+  AZURE_SUBSCRIPTION: 'SC-UDST-CCIT-DSAI3202-1'
+  RESOURCE_GROUP: 'rg-60306249'
+  WORKSPACE_NAME: 'Amazon-lab2-60306249'
+steps:
+  - checkout: self
+  - task: AzureCLI@2
+    displayName: "Submit Azure ML Sweep Job"
+    inputs:
+      azureSubscription: $(AZURE_SUBSCRIPTION)
+      scriptType: bash
+      scriptLocation: inlineScript
+      inlineScript: |
+        set -e
+        echo "=============================="
+        echo "Checking Azure login context"
+        echo "=============================="
+        az account show -o table
+        az group list -o table
+        echo "All available subscriptions:"
+        az account list -o table
+        echo "Forcing correct subscription (IMPORTANT CHECK)"
+        az account set --subscription "$(az account show --query id -o tsv)"
+        echo "Verifying active subscription:"
+        az account show -o table
+        echo "=============================="
+        echo "Installing Azure ML extension"
+        echo "=============================="
+        az extension add -n ml -y || az extension update -n ml
+        echo "=============================="
+        echo "Validating resource group"
+        echo "=============================="
+        az group show -n $(RESOURCE_GROUP)
+        echo "=============================="
+        echo "Setting Azure ML defaults"
+        echo "=============================="
+        az configure --defaults \
+          group=$(RESOURCE_GROUP) \
+          workspace=$(WORKSPACE_NAME)
+        echo "Current directory:"
+        pwd
+        ls -R
+        echo "=============================="
+        echo "Submitting Azure ML Sweep Job"
+        echo "=============================="
+        JOB_NAME=$(az ml job create --file config/sweep_job.yml --query name -o tsv)
+        echo "Job submitted: $JOB_NAME"
+        echo "Streaming logs..."
+        az ml job stream --name $JOB_NAME
